@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Costeo de Cocteles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,500&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14100D;
+    --bg-panel: #1D1712;
+    --bg-row: #221B15;
+    --line: #3A2E23;
+    --copper: #C1793E;
+    --copper-bright: #E0A15E;
+    --gold: #D9B26A;
+    --cream: #F1E7D6;
+    --muted: #93887A;
+    --danger: #B0503F;
+    --good: #7FA36B;
+    --base: #C1793E;
+    --licor: #A85C9E;
+    --mixer: #6E9BB0;
+    --syrup: #D9B26A;
+    --garnish: #7FA36B;
+    --otro: #93887A;
+    --dilucion: #3F5E6E;
+    --radius: 10px;
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; background:var(--bg); color:var(--cream);
+    font-family:'Space Grotesk', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  body{ padding: 40px 24px 80px; }
+  .wrap{ max-width: 1180px; margin: 0 auto; }
+
+  header{ margin-bottom: 36px; border-bottom:1px solid var(--line); padding-bottom:24px; display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap;}
+  .brand-mark{ display:flex; align-items:center; gap:14px; }
+  .brand-mark svg{ flex-shrink:0; }
+  h1{
+    font-family:'Fraunces', serif; font-weight:600; font-style:italic;
+    font-size: 2.4rem; margin:0; letter-spacing:-0.01em; color:var(--cream);
+  }
+  .sub{ color:var(--muted); font-size:0.92rem; margin-top:4px; letter-spacing:0.02em;}
+  .eyebrow{ font-family:'JetBrains Mono', monospace; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.14em; color:var(--copper-bright); margin-bottom:6px;}
+
+  .layout{ display:grid; grid-template-columns: 1.65fr 1fr; gap: 28px; align-items:start; }
+  @media (max-width: 920px){ .layout{ grid-template-columns: 1fr; } }
+
+  .panel{ background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius); padding:22px; }
+  .panel + .panel{ margin-top:22px; }
+  .panel h2{ font-family:'Fraunces', serif; font-weight:600; font-size:1.15rem; margin:0 0 16px; color:var(--copper-bright); }
+
+  /* Method selector */
+  .method-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; }
+  .method-card{
+    background:var(--bg-row); border:1px solid var(--line); border-radius:8px; padding:14px 12px;
+    cursor:pointer; transition: border-color .15s, background .15s; text-align:left;
+  }
+  .method-card:hover{ border-color: var(--copper); }
+  .method-card.active{ border-color: var(--copper-bright); background:#2A2015; }
+  .method-card .m-name{ font-weight:600; font-size:0.95rem; }
+  .method-card .m-desc{ color:var(--muted); font-size:0.76rem; margin-top:3px; line-height:1.3; }
+  .method-card .m-dil{ margin-top:10px; display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:0.78rem; }
+  .method-card .m-dil input{ width:52px; }
+
+  /* Table */
+  table{ width:100%; border-collapse:collapse; }
+  thead th{
+    text-align:left; font-family:'JetBrains Mono', monospace; font-size:0.66rem; text-transform:uppercase;
+    letter-spacing:0.08em; color:var(--muted); font-weight:500; padding:0 8px 10px; border-bottom:1px solid var(--line);
+  }
+  tbody td{ padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background: rgba(193,121,62,0.04); }
+
+  input, select{
+    background:var(--bg-row); border:1px solid var(--line); color:var(--cream);
+    border-radius:6px; padding:7px 8px; font-family:'Space Grotesk', sans-serif; font-size:0.85rem;
+    width:100%; outline:none; transition:border-color .15s;
+  }
+  input:focus, select:focus{ border-color: var(--copper-bright); }
+  input[type=number]{ font-family:'JetBrains Mono', monospace; }
+  td.col-name input{ min-width:120px; }
+  td.col-num input{ width:72px; }
+  .price-hint{ font-family:'JetBrains Mono', monospace; font-size:0.62rem; color:var(--muted); margin-top:3px; white-space:nowrap; }
+  .cat-tag{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+
+  .cost-cell{ font-family:'JetBrains Mono', monospace; color:var(--copper-bright); font-weight:500; white-space:nowrap; }
+
+  .rm-btn{
+    background:transparent; border:1px solid var(--line); color:var(--muted); border-radius:6px;
+    width:30px; height:30px; cursor:pointer; font-size:0.9rem; line-height:1; transition: all .15s;
+  }
+  .rm-btn:hover{ border-color: var(--danger); color: var(--danger); }
+
+  .add-row{
+    margin-top:14px; background:transparent; border:1px dashed var(--line); color:var(--copper-bright);
+    padding:10px 14px; border-radius:8px; cursor:pointer; font-size:0.85rem; font-family:'Space Grotesk';
+    width:100%; transition: border-color .15s, background .15s;
+  }
+  .add-row:hover{ border-color:var(--copper-bright); background: rgba(193,121,62,0.06); }
+
+  /* Results */
+  .stat-row{ display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--line); }
+  .stat-row:last-child{ border-bottom:none; }
+  .stat-label{ color:var(--muted); font-size:0.82rem; }
+  .stat-value{ font-family:'JetBrains Mono', monospace; font-size:1rem; color:var(--cream); }
+  .stat-value.big{ font-size:1.6rem; color:var(--copper-bright); font-weight:500;}
+  .stat-value.abv{ color:var(--gold); }
+
+  .margin-input{ display:flex; align-items:center; gap:8px; margin-top:14px; }
+  .margin-input input{ width:64px; }
+  .margin-input span{ color:var(--muted); font-size:0.8rem; }
+
+  /* Glass visual */
+  .glass-wrap{ display:flex; flex-direction:column; align-items:center; padding:10px 0 4px; }
+  .abv-badge{
+    font-family:'Fraunces', serif; font-style:italic; font-weight:600; font-size:2.1rem; color:var(--gold);
+    margin-top:10px;
+  }
+  .abv-badge-label{ font-family:'JetBrains Mono', monospace; font-size:0.66rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); }
+
+  .legend{ display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:16px; justify-content:center; }
+  .legend-item{ display:flex; align-items:center; gap:6px; font-size:0.72rem; color:var(--muted); }
+  .legend-dot{ width:9px; height:9px; border-radius:2px; }
+
+  .servings-bar{ display:flex; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+  .servings-field{ flex:1; min-width:160px; }
+  .servings-field label{ display:block; font-family:'JetBrains Mono', monospace; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:6px; }
+
+  footer{ margin-top:40px; text-align:center; color:var(--muted); font-size:0.75rem; font-family:'JetBrains Mono', monospace; letter-spacing:0.03em;}
+  footer .footer-logo{ display:block; margin:0 auto 14px; max-width:170px; height:auto; opacity:0.92; }
+  footer .footer-text{ margin-bottom:8px; }
+  footer .footer-ig{
+    display:inline-flex; align-items:center; color:var(--copper-bright); text-decoration:none;
+    font-weight:500; letter-spacing:0.04em; transition:color .15s;
+  }
+  footer .footer-ig:hover{ color:var(--gold); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand-mark">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <path d="M6 6 L28 6 L18 18 L18 28 L22 28 L22 30 L12 30 L12 28 L16 28 L16 18 Z" stroke="#E0A15E" stroke-width="1.6" fill="none" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <div class="eyebrow">Barra de costos</div>
+        <h1>Costeo de Cocteles</h1>
+      </div>
+    </div>
+    <div class="sub">Cargá los insumos, elegí la técnica y obtené costo, precio sugerido y ABV final con dilución incluida.</div>
+  </header>
+
+  <div class="layout">
+    <!-- LEFT: ingredients -->
+    <div>
+      <div class="panel">
+        <h2>Método &amp; dilución</h2>
+        <div class="method-grid" id="methodGrid"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Ingredientes</h2>
+        <div class="servings-bar">
+          <div class="servings-field">
+            <label>Nombre del coctel</label>
+            <input type="text" id="cocktailName" value="Sin nombre" />
+          </div>
+          <div class="servings-field">
+            <label>Tragos que rinde la receta</label>
+            <input type="number" id="servings" value="1" min="1" step="1" />
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width:18%">Insumo</th>
+              <th style="width:12%">Categoría</th>
+              <th style="width:8%">Cant.</th>
+              <th style="width:7%">Unid.</th>
+              <th style="width:10%">Tamaño envase</th>
+              <th style="width:12%">Precio envase</th>
+              <th style="width:7%">%ABV</th>
+              <th style="width:11%">Costo</th>
+              <th style="width:4%"></th>
+            </tr>
+          </thead>
+          <tbody id="ingredientBody"></tbody>
+        </table>
+        <button class="add-row" id="addIngredient">+ Agregar insumo</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: results -->
+    <div>
+      <div class="panel">
+        <h2>Composición del trago</h2>
+        <div class="glass-wrap">
+          <svg id="glassSvg" width="140" height="180" viewBox="0 0 140 180"></svg>
+          <div class="abv-badge" id="abvBadge">0.0%</div>
+          <div class="abv-badge-label">ABV final (con dilución)</div>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Resumen</h2>
+        <div class="stat-row"><span class="stat-label">Volumen pre-dilución</span><span class="stat-value" id="preVol">0 ml</span></div>
+        <div class="stat-row"><span class="stat-label">Agua de dilución</span><span class="stat-value" id="dilWater">0 ml</span></div>
+        <div class="stat-row"><span class="stat-label">Volumen final servido</span><span class="stat-value" id="finalVol">0 ml</span></div>
+        <div class="stat-row"><span class="stat-label">ABV final</span><span class="stat-value abv" id="abvFinal">0.0%</span></div>
+        <div class="stat-row"><span class="stat-label">Costo total de la receta</span><span class="stat-value" id="totalCost">$0.00</span></div>
+        <div class="stat-row"><span class="stat-label">Costo por trago</span><span class="stat-value big" id="costPerServing">$0.00</span></div>
+
+        <div class="margin-input">
+          <span>% costo objetivo</span>
+          <input type="number" id="targetCostPct" value="20" min="1" max="99" step="1" />
+          <span>→ precio sugerido:</span>
+        </div>
+        <div class="stat-row" style="border:none; padding-top:6px;">
+          <span class="stat-label">Precio de venta sugerido</span>
+          <span class="stat-value big" id="suggestedPrice">$0.00</span>
+        </div>
+        <button class="add-row" id="downloadPdfBtn" style="margin-top:18px; color:var(--gold); border-color:var(--copper);">⬇ Descargar ficha en PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <img src="data:image/png;base64,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" alt="Logo" class="footer-logo"/>
+    <div class="footer-text">hecho para bartenders — editá cualquier valor y todo se recalcula solo</div>
+    <a href="https://instagram.com/dani.rfrank" target="_blank" rel="noopener" class="footer-ig">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align:-2px; margin-right:4px;">
+        <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" stroke-width="1.8"/>
+        <circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/>
+        <circle cx="17.3" cy="6.7" r="1.1" fill="currentColor"/>
+      </svg>@dani.rfrank
+    </a>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const CAT_RGB = {
+  base:[193,121,62], licor:[168,92,158], mixer:[110,155,176],
+  syrup:[217,178,106], garnish:[127,163,107], otro:[147,136,122]
+};
+const DIL_RGB = [63,94,110];
+const CATEGORIES = [
+  { key:'base',    label:'Bebida base', color:'var(--base)' },
+  { key:'licor',   label:'Licor / Vermut', color:'var(--licor)' },
+  { key:'mixer',   label:'Mixer / Jugo', color:'var(--mixer)' },
+  { key:'syrup',   label:'Syrup / Almíbar', color:'var(--syrup)' },
+  { key:'garnish', label:'Garnish', color:'var(--garnish)' },
+  { key:'otro',    label:'Otro', color:'var(--otro)' },
+];
+
+const METHODS = [
+  { key:'directo',    name:'Directo (Built)', desc:'Servido sobre hielo, sin agitar ni mezclar.', dilution:10 },
+  { key:'refrescado',  name:'Refrescado (Stirred)', desc:'Mezclado con hielo en jarra o vaso mezclador.', dilution:25 },
+  { key:'batido',     name:'Batido (Shaken)', desc:'Agitado enérgicamente con hielo en coctelera.', dilution:30 },
+];
+
+let idCounter = 0;
+
+function mkIng(name, cat, qty, unit, containerSize, containerPrice, abv){
+  return { id: idCounter++, name, cat, qty, unit, containerSize, containerPrice, abv };
+}
+
+let state = {
+  method: 'refrescado',
+  dilutions: { directo:10, refrescado:25, batido:30 },
+  ingredients: [
+    mkIng('Gin', 'base', 60, 'ml', 750, 13500, 40),
+    mkIng('Vermut seco', 'licor', 15, 'ml', 750, 6750, 18),
+    mkIng('Syrup de romero', 'syrup', 10, 'ml', 1000, 4000, 0),
+    mkIng('Twist de limón', 'garnish', 1, 'unidad', 1, 25, 0),
+  ]
+};
+
+function catColor(key){ return CATEGORIES.find(c=>c.key===key)?.color || 'var(--otro)'; }
+function catLabel(key){ return CATEGORIES.find(c=>c.key===key)?.label || 'Otro'; }
+function containerUnitLabel(unit){
+  if(unit==='ml') return 'ml';
+  if(unit==='g') return 'g';
+  return 'unid.';
+}
+// Precio por ml (o por g, o por unidad) derivado del envase cargado
+function unitPrice(ing){
+  if(ing.unit==='unidad') return ing.containerPrice;
+  const size = ing.containerSize > 0 ? ing.containerSize : 1;
+  return ing.containerPrice / size;
+}
+function pricePerLiterOrKg(ing){
+  return unitPrice(ing) * 1000;
+}
+
+
+function renderMethods(){
+  const grid = document.getElementById('methodGrid');
+  grid.innerHTML = '';
+  METHODS.forEach(m=>{
+    const card = document.createElement('div');
+    card.className = 'method-card' + (state.method===m.key ? ' active':'');
+    card.innerHTML = `
+      <div class="m-name">${m.name}</div>
+      <div class="m-desc">${m.desc}</div>
+      <div class="m-dil"><input type="number" min="0" max="60" step="1" value="${state.dilutions[m.key]}" data-method="${m.key}"/> % dilución final</div>
+    `;
+    card.addEventListener('click', (e)=>{
+      if(e.target.tagName === 'INPUT') return;
+      state.method = m.key;
+      renderAll();
+    });
+    card.querySelector('input').addEventListener('click', e=> e.stopPropagation());
+    card.querySelector('input').addEventListener('input', e=>{
+      const v = parseFloat(e.target.value)||0;
+      state.dilutions[m.key] = Math.min(60, Math.max(0,v));
+      updateSummary();
+    });
+    grid.appendChild(card);
+  });
+}
+
+function ingCost(ing){
+  if(ing.unit==='unidad') return ing.qty * ing.containerPrice;
+  return ing.qty * unitPrice(ing); // qty en ml o g × precio por ml/g
+}
+
+function renderTable(){
+  const body = document.getElementById('ingredientBody');
+  body.innerHTML = '';
+  state.ingredients.forEach(ing=>{
+    const tr = document.createElement('tr');
+    const catOptions = CATEGORIES.map(c=>`<option value="${c.key}" ${c.key===ing.cat?'selected':''}>${c.label}</option>`).join('');
+    const isUnidad = ing.unit === 'unidad';
+    tr.innerHTML = `
+      <td class="col-name"><input type="text" value="${ing.name}" data-field="name" /></td>
+      <td><select data-field="cat">${catOptions}</select></td>
+      <td class="col-num"><input type="number" min="0" step="0.1" value="${ing.qty}" data-field="qty" /></td>
+      <td>
+        <select data-field="unit">
+          <option value="ml" ${ing.unit==='ml'?'selected':''}>ml</option>
+          <option value="g" ${ing.unit==='g'?'selected':''}>g</option>
+          <option value="unidad" ${ing.unit==='unidad'?'selected':''}>unidad</option>
+        </select>
+      </td>
+      <td class="col-num">
+        <input type="number" min="1" step="1" value="${ing.containerSize}" data-field="containerSize"
+          placeholder="${containerUnitLabel(ing.unit)}" title="Tamaño del envase en ${containerUnitLabel(ing.unit)}" ${isUnidad?'disabled':''}/>
+      </td>
+      <td class="col-num">
+        <input type="number" min="0" step="1" value="${ing.containerPrice}" data-field="containerPrice"
+          title="Precio pagado por el envase completo"/>
+        <div class="price-hint">${isUnidad ? `$${ing.containerPrice.toFixed(0)}/unid` : `≈ $${pricePerLiterOrKg(ing).toFixed(0)}/${ing.unit==='ml'?'L':'Kg'}`}</div>
+      </td>
+      <td class="col-num"><input type="number" min="0" max="100" step="1" value="${ing.abv}" data-field="abv" ${ing.unit!=='ml'?'disabled':''}/></td>
+      <td class="cost-cell">$${ingCost(ing).toFixed(2)}</td>
+      <td><button class="rm-btn" title="Quitar">✕</button></td>
+    `;
+    tr.querySelectorAll('input,select').forEach(el=>{
+      el.addEventListener('input', ()=>{
+        const field = el.dataset.field;
+        let val = el.value;
+        if(field==='qty' || field==='containerSize' || field==='containerPrice' || field==='abv') val = parseFloat(val)||0;
+        ing[field] = val;
+
+        // Cambios de categoría/unidad afectan el layout de la fila (envase habilitado/deshabilitado, abv, etc):
+        // ahí sí conviene redibujar la tabla completa. Los campos de texto/número se actualizan in-place
+        // para no perder el foco mientras se escribe.
+        if(field==='cat' || field==='unit'){
+          if(field==='unit'){
+            if(val!=='ml') ing.abv = 0;
+            if(val==='unidad') ing.containerSize = 1;
+            else if(ing.containerSize <= 1) ing.containerSize = val==='ml' ? 750 : 500;
+          }
+          renderTable();
+        } else {
+          tr.querySelector('.cost-cell').textContent = `$${ingCost(ing).toFixed(2)}`;
+          const hint = tr.querySelector('.price-hint');
+          if(hint){
+            hint.textContent = isUnidad ? `$${ing.containerPrice.toFixed(0)}/unid` : `≈ $${pricePerLiterOrKg(ing).toFixed(0)}/${ing.unit==='ml'?'L':'Kg'}`;
+          }
+        }
+        updateSummary();
+      });
+    });
+    tr.querySelector('.rm-btn').addEventListener('click', ()=>{
+      state.ingredients = state.ingredients.filter(x=>x.id!==ing.id);
+      renderTable();
+      updateSummary();
+    });
+    body.appendChild(tr);
+  });
+}
+
+function updateSummary(){
+  const totals = computeTotals();
+  renderResults(totals);
+  renderGlass(totals);
+  renderLegend();
+}
+
+function computeTotals(){
+  let preVol = 0, alcoholVol = 0, totalCost = 0;
+  state.ingredients.forEach(ing=>{
+    totalCost += ingCost(ing);
+    if(ing.unit==='ml'){
+      preVol += ing.qty;
+      alcoholVol += ing.qty * (ing.abv/100);
+    }
+  });
+  const dil = state.dilutions[state.method];
+  const water = dil >= 100 ? 0 : preVol * (dil/(100-dil));
+  const finalVol = preVol + water;
+  const finalABV = finalVol > 0 ? (alcoholVol/finalVol)*100 : 0;
+  const servings = Math.max(1, parseFloat(document.getElementById('servings').value)||1);
+  const costPerServing = totalCost/servings;
+  const targetPct = Math.min(99, Math.max(1, parseFloat(document.getElementById('targetCostPct').value)||20));
+  const suggestedPrice = costPerServing / (targetPct/100);
+  return { preVol, water, finalVol, alcoholVol, finalABV, totalCost, costPerServing, suggestedPrice };
+}
+
+function renderResults(t){
+  document.getElementById('preVol').textContent = `${t.preVol.toFixed(0)} ml`;
+  document.getElementById('dilWater').textContent = `${t.water.toFixed(0)} ml`;
+  document.getElementById('finalVol').textContent = `${t.finalVol.toFixed(0)} ml`;
+  document.getElementById('abvFinal').textContent = `${t.finalABV.toFixed(1)}%`;
+  document.getElementById('totalCost').textContent = `$${t.totalCost.toFixed(2)}`;
+  document.getElementById('costPerServing').textContent = `$${t.costPerServing.toFixed(2)}`;
+  document.getElementById('suggestedPrice').textContent = `$${t.suggestedPrice.toFixed(2)}`;
+  document.getElementById('abvBadge').textContent = `${t.finalABV.toFixed(1)}%`;
+}
+
+function renderGlass(t){
+  const svg = document.getElementById('glassSvg');
+  const W = 140, H = 180;
+  const glassTop = 20, glassBottom = 160, glassTopW = 100, glassBottomW = 56;
+  const leftTop = (W-glassTopW)/2, rightTop = leftTop+glassTopW;
+  const leftBot = (W-glassBottomW)/2, rightBot = leftBot+glassBottomW;
+
+  const segments = [];
+  state.ingredients.filter(i=>i.unit==='ml' && i.qty>0).forEach(i=>{
+    segments.push({ vol: i.qty, color: catColor(i.cat) });
+  });
+  if(t.water>0) segments.push({ vol: t.water, color: 'var(--dilucion)' });
+
+  const totalVol = t.finalVol || 1;
+  let clipRects = '';
+  let yCursor = glassBottom;
+  const glassHeight = glassBottom - glassTop;
+
+  segments.forEach(seg=>{
+    const h = (seg.vol/totalVol) * glassHeight;
+    const yTop = yCursor - h;
+    const fracTop = (glassBottom - yTop) / glassHeight;
+    const fracBot = (glassBottom - yCursor) / glassHeight;
+    const wTopSeg = glassBottomW + (glassTopW-glassBottomW)*fracTop;
+    const wBotSeg = glassBottomW + (glassTopW-glassBottomW)*fracBot;
+    const xTopL = (W-wTopSeg)/2, xBotL = (W-wBotSeg)/2;
+    clipRects += `<polygon points="${xBotL},${yCursor} ${xBotL+wBotSeg},${yCursor} ${xTopL+wTopSeg},${yTop} ${xTopL},${yTop}" fill="${seg.color}" />`;
+    yCursor = yTop;
+  });
+
+  svg.innerHTML = `
+    <defs>
+      <clipPath id="glassClip">
+        <polygon points="${leftTop},${glassTop} ${rightTop},${glassTop} ${rightBot},${glassBottom} ${leftBot},${glassBottom}" />
+      </clipPath>
+    </defs>
+    <g clip-path="url(#glassClip)">
+      <rect x="0" y="0" width="${W}" height="${H}" fill="#241C15"/>
+      ${clipRects}
+    </g>
+    <polygon points="${leftTop},${glassTop} ${rightTop},${glassTop} ${rightBot},${glassBottom} ${leftBot},${glassBottom}"
+      fill="none" stroke="#5A4A38" stroke-width="1.5" />
+    <line x1="${leftBot-8}" y1="${glassBottom}" x2="${rightBot+8}" y2="${glassBottom}" stroke="#5A4A38" stroke-width="1.5"/>
+  `;
+}
+
+function renderLegend(){
+  const legend = document.getElementById('legend');
+  const used = new Set(state.ingredients.filter(i=>i.unit==='ml' && i.qty>0).map(i=>i.cat));
+  let items = CATEGORIES.filter(c=>used.has(c.key)).map(c=>`
+    <div class="legend-item"><span class="legend-dot" style="background:${c.color}"></span>${c.label}</div>
+  `).join('');
+  items += `<div class="legend-item"><span class="legend-dot" style="background:var(--dilucion)"></span>Dilución (hielo)</div>`;
+  legend.innerHTML = items;
+}
+
+function renderAll(){
+  renderMethods();
+  renderTable();
+  const totals = computeTotals();
+  renderResults(totals);
+  renderGlass(totals);
+  renderLegend();
+}
+
+document.getElementById('addIngredient').addEventListener('click', ()=>{
+  state.ingredients.push(mkIng('Nuevo insumo', 'otro', 0, 'ml', 750, 0, 0));
+  renderAll();
+});
+document.getElementById('servings').addEventListener('input', updateSummary);
+document.getElementById('targetCostPct').addEventListener('input', updateSummary);
+
+function generatePDF(){
+  if(!window.jspdf){
+    alert('No se pudo cargar la librería de PDF (revisá tu conexión a internet) e intentá de nuevo.');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  const pageW = 210, pageH = 297, marginX = 20;
+  let y = 26;
+
+  doc.setFillColor(20,16,13);
+  doc.rect(0,0,pageW,pageH,'F');
+
+  const name = document.getElementById('cocktailName').value.trim() || 'Sin nombre';
+  const methodObj = METHODS.find(m=>m.key===state.method);
+  const totals = computeTotals();
+
+  doc.setFont('times','italic');
+  doc.setFontSize(28);
+  doc.setTextColor(241,231,214);
+  doc.text(name, marginX, y);
+  y += 7;
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+  doc.setTextColor(147,136,122);
+  const dateStr = new Date().toLocaleDateString('es-AR', { day:'2-digit', month:'long', year:'numeric' });
+  doc.text(`Ficha de costeo · ${dateStr}`, marginX, y);
+  y += 9;
+
+  doc.setDrawColor(58,46,35);
+  doc.line(marginX, y, pageW-marginX, y);
+  y += 10;
+
+  doc.setFontSize(7.5);
+  doc.setTextColor(147,136,122);
+  doc.text('MÉTODO', marginX, y);
+  doc.text('DILUCIÓN', pageW-marginX-30, y);
+  y += 6;
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(12);
+  doc.setTextColor(224,161,94);
+  doc.text(methodObj.name, marginX, y);
+  doc.text(`${state.dilutions[state.method]}%`, pageW-marginX-30, y);
+  y += 12;
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(147,136,122);
+  doc.text('INSUMO', marginX, y);
+  doc.text('CANT.', marginX+95, y);
+  doc.text('%ABV', marginX+128, y);
+  doc.text('COSTO', pageW-marginX-22, y);
+  y += 4;
+  doc.setDrawColor(58,46,35);
+  doc.line(marginX, y, pageW-marginX, y);
+  y += 8;
+
+  doc.setFontSize(10.5);
+  state.ingredients.forEach(ing=>{
+    const rgb = CAT_RGB[ing.cat] || CAT_RGB.otro;
+    doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+    doc.circle(marginX+1.2, y-1.5, 1.3, 'F');
+    doc.setTextColor(241,231,214);
+    doc.text(ing.name || '—', marginX+6, y);
+    doc.setTextColor(190,180,165);
+    const qtyStr = ing.unit==='unidad' ? `${ing.qty} u.` : `${ing.qty} ${ing.unit}`;
+    doc.text(qtyStr, marginX+95, y);
+    doc.text((ing.unit==='ml' && ing.abv>0) ? `${ing.abv}%` : '—', marginX+128, y);
+    doc.setTextColor(224,161,94);
+    doc.text(`$${ingCost(ing).toFixed(2)}`, pageW-marginX, y, { align:'right' });
+    y += 8;
+  });
+
+  y += 1;
+  doc.setDrawColor(58,46,35);
+  doc.line(marginX, y, pageW-marginX, y);
+  y += 12;
+
+  // Barra de composición por volumen (incluye dilución)
+  const barW = pageW - marginX*2, barH = 6;
+  let xCursor = marginX;
+  const segs = [];
+  state.ingredients.filter(i=>i.unit==='ml' && i.qty>0).forEach(i=> segs.push({ vol:i.qty, rgb: CAT_RGB[i.cat] || CAT_RGB.otro }));
+  if(totals.water>0) segs.push({ vol: totals.water, rgb: DIL_RGB });
+  const totalVol = totals.finalVol || 1;
+  segs.forEach(seg=>{
+    const w = (seg.vol/totalVol) * barW;
+    doc.setFillColor(seg.rgb[0], seg.rgb[1], seg.rgb[2]);
+    doc.rect(xCursor, y, Math.max(w,0.01), barH, 'F');
+    xCursor += w;
+  });
+  y += barH + 5;
+  doc.setFontSize(7.5);
+  doc.setTextColor(147,136,122);
+  doc.text('Composición por volumen (insumos + dilución)', marginX, y);
+  y += 14;
+
+  function statRow(label, value, big){
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(147,136,122);
+    doc.text(label, marginX, y);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(big ? 15 : 11);
+    doc.setTextColor(big ? 217:241, big ? 178:231, big ? 106:214);
+    doc.text(String(value), pageW-marginX, y, { align:'right' });
+    y += big ? 11 : 8;
+    doc.setDrawColor(58,46,35);
+    doc.line(marginX, y-4.5, pageW-marginX, y-4.5);
+  }
+
+  statRow('Volumen final servido', `${totals.finalVol.toFixed(0)} ml`);
+  statRow('ABV final (con dilución)', `${totals.finalABV.toFixed(1)}%`);
+  statRow('Costo total de la receta', `$${totals.totalCost.toFixed(2)}`);
+  statRow('Costo por trago', `$${totals.costPerServing.toFixed(2)}`, true);
+  statRow('Precio de venta sugerido', `$${totals.suggestedPrice.toFixed(2)}`, true);
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(110,100,90);
+  doc.text('Generado con Costeo de Cocteles', marginX, pageH-14);
+
+  const fileSafeName = name.replace(/[^a-z0-9]+/gi,'_').toLowerCase().replace(/^_+|_+$/g,'') || 'coctel';
+  doc.save(`${fileSafeName}-costeo.pdf`);
+}
+
+document.getElementById('downloadPdfBtn').addEventListener('click', generatePDF);
+
+renderAll();
+</script>
+</body>
+</html>
