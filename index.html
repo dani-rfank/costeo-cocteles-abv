@@ -69,9 +69,21 @@
   .method-card .m-dil input{ width:52px; }
 
   /* Table */
-  .table-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; margin: 0 -4px; padding: 0 4px; }
-  .table-scroll-hint{ display:none; font-family:'JetBrains Mono', monospace; font-size:0.65rem; color:var(--muted); margin-bottom:8px; text-align:right; }
-  table{ width:100%; min-width:640px; border-collapse:collapse; }
+  .table-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .table-scroll-hint{ display:block; font-family:'JetBrains Mono', monospace; font-size:0.65rem; color:var(--muted); margin-bottom:8px; text-align:right; }
+  table{ width:100%; border-collapse:collapse; table-layout:auto; min-width:640px; }
+  /* Layout de una sola columna (panel ocupa todo el ancho disponible): entra fluida sin scroll */
+  @media (min-width: 750px) and (max-width: 919px){
+    .table-scroll{ overflow-x:hidden; }
+    .table-scroll-hint{ display:none; }
+    table{ table-layout:fixed; min-width:0; }
+  }
+  /* Desktop ancho (layout de dos columnas: el panel de ingredientes es más angosto a igual ancho de ventana, necesita más espacio total) */
+  @media (min-width: 1200px){
+    .table-scroll{ overflow-x:hidden; }
+    .table-scroll-hint{ display:none; }
+    table{ table-layout:fixed; min-width:0; }
+  }
   thead th{
     text-align:left; font-family:'JetBrains Mono', monospace; font-size:0.66rem; text-transform:uppercase;
     letter-spacing:0.08em; color:var(--muted); font-weight:500; padding:0 8px 10px; border-bottom:1px solid var(--line);
@@ -86,13 +98,15 @@
     width:100%; outline:none; transition:border-color .15s;
   }
   input:focus, select:focus{ border-color: var(--copper-bright); }
-  input[type=number]{ font-family:'JetBrains Mono', monospace; }
-  td.col-name input{ min-width:120px; }
-  td.col-num input{ width:72px; }
-  .price-hint{ font-family:'JetBrains Mono', monospace; font-size:0.62rem; color:var(--muted); margin-top:3px; white-space:nowrap; }
+  input[type=number]{ font-family:'JetBrains Mono', monospace; -moz-appearance:textfield; }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button{ -webkit-appearance:none; margin:0; }
+  td.col-name input{ min-width:0; width:100%; }
+  td.col-num input{ width:100%; min-width:0; padding:7px 3px; text-align:center; }
+  .price-hint{ font-family:'JetBrains Mono', monospace; font-size:0.62rem; color:var(--muted); margin-top:3px; white-space:normal; overflow-wrap:break-word; }
   .cat-tag{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
 
-  .cost-cell{ font-family:'JetBrains Mono', monospace; color:var(--copper-bright); font-weight:500; white-space:nowrap; }
+  .cost-cell{ font-family:'JetBrains Mono', monospace; color:var(--copper-bright); font-weight:500; overflow-wrap:break-word; }
 
   .rm-btn{
     background:transparent; border:1px solid var(--line); color:var(--muted); border-radius:6px;
@@ -162,8 +176,6 @@
 
     .servings-bar{ flex-direction:column; gap:12px; margin-bottom:14px; }
 
-    .table-scroll-hint{ display:block; }
-
     /* Que los inputs y selects tengan buen tamaño para tocar con el dedo */
     input, select{ padding:9px 8px; font-size:0.9rem; }
     input[type=number]{ font-size:0.9rem; }
@@ -223,14 +235,14 @@
           <table>
             <thead>
               <tr>
-                <th style="width:18%">Insumo</th>
-                <th style="width:12%">Categoría</th>
+                <th style="width:26%">Insumo</th>
+                <th style="width:11%">Categoría</th>
                 <th style="width:8%">Cant.</th>
-                <th style="width:7%">Unid.</th>
-                <th style="width:10%">Tamaño envase</th>
-                <th style="width:12%">Precio envase</th>
-                <th style="width:7%">%ABV</th>
-                <th style="width:11%">Costo</th>
+                <th style="width:6%">Unid.</th>
+                <th style="width:9%">Tamaño envase</th>
+                <th style="width:11%">Precio envase</th>
+                <th style="width:8%">%ABV</th>
+                <th style="width:14%">Costo</th>
                 <th style="width:4%"></th>
               </tr>
             </thead>
